@@ -14,11 +14,8 @@ export async function fetchAssetPrices(
     idToSymbolMap: StringMap
 ): Promise<MarketAssetPriceMap> {
 
-    console.log(assetData)
     let idQueryString = '';
     symbolsToFetch.forEach((symbol, index) => {
-
-      console.log(`!!!!!!! ${symbol} ${assetData[symbol].id}`)
         if (index === symbolsToFetch.length - 1) {
             idQueryString += `${assetData[symbol].id}`;
         } else {
@@ -28,7 +25,6 @@ export async function fetchAssetPrices(
 
     const query = `currencies/ticker?key=${NOMICS_KEY}&ids=${idQueryString}`;
 
-    console.log(`!!!!!!! query: ${MARKET_API_URL}/${query}`)
     const response = await fetch(`${MARKET_API_URL}/${query}`, {
         headers: {
             Accept: 'application/json'
@@ -37,16 +33,12 @@ export async function fetchAssetPrices(
 
     const prices = await response.json();
 
-    console.log(`!!!!!!! prices: `)
-    console.log(prices)
-
     const priceMap: MarketAssetPriceMap = {};
     Object.keys(prices).forEach(key => {
         const price = prices[key].price;
-        const symbol = prices[key].symbol//idToSymbolMap[key];
-        console.log(`!!!!!!! key:${key} ${price} ${symbol}`)
+        const symbol = idToSymbolMap[prices[key].id];
 
-        // Nomics unable to price WETH
+        // Nomics unable to price WETH so use ETH info
         if(symbol === 'ETH'){
           priceMap['WETH'] = {
               value: bnum(price),
@@ -58,6 +50,7 @@ export async function fetchAssetPrices(
             currency: 'usd',
         };
     });
+
     return priceMap;
 }
 
@@ -65,8 +58,6 @@ export async function fetchAssetList(
     symbolsToFetch: string[]
 ): Promise<MarketAssetMap> {
     let query = `currencies?key=${NOMICS_KEY}&attributes=id,original_symbol,name`;
-
-    console.log(`!!!!!!! Query: ${MARKET_API_URL}/${query}`)
 
     const response = await fetch(`${MARKET_API_URL}/${query}`, {
         headers: {
