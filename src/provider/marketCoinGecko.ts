@@ -4,9 +4,7 @@ import { MarketAssetMap } from '../stores/Market';
 import { bnum } from '../utils/helpers';
 
 const MARKET_API_URL =
-    process.env.MARKET_API_URL || 'https://api.nomics.com/v1';
-
-const NOMICS_KEY = process.env.REACT_APP_NOMICS_API;
+    process.env.MARKET_API_URL || 'https://api.coingecko.com/api/v3';
 
 export async function fetchAssetPrices(
     symbolsToFetch: string[],
@@ -22,37 +20,25 @@ export async function fetchAssetPrices(
         if (index === symbolsToFetch.length - 1) {
             idQueryString += `${assetData[symbol].id}`;
         } else {
-            idQueryString += `${assetData[symbol].id},`;
+            idQueryString += `${assetData[symbol].id}%2C`;
         }
     });
 
-    const query = `currencies/ticker?key=${NOMICS_KEY}&ids=${idQueryString}`;
+    const query = `simple/price?ids=${idQueryString}&vs_currencies=usd&include_market_cap=false&include_last_updated_at=false`;
 
-    console.log(`!!!!!!! query: ${MARKET_API_URL}/${query}`)
     const response = await fetch(`${MARKET_API_URL}/${query}`, {
         headers: {
-            Accept: 'application/json'
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
         },
     });
 
     const prices = await response.json();
 
-    console.log(`!!!!!!! prices: `)
-    console.log(prices)
-
     const priceMap: MarketAssetPriceMap = {};
     Object.keys(prices).forEach(key => {
-        const price = prices[key].price;
-        const symbol = prices[key].symbol//idToSymbolMap[key];
-        console.log(`!!!!!!! key:${key} ${price} ${symbol}`)
-
-        // Nomics unable to price WETH
-        if(symbol === 'ETH'){
-          priceMap['WETH'] = {
-              value: bnum(price),
-              currency: 'usd',
-          };
-        }
+        const price = prices[key].usd;
+        const symbol = idToSymbolMap[key];
         priceMap[symbol] = {
             value: bnum(price),
             currency: 'usd',
@@ -64,13 +50,12 @@ export async function fetchAssetPrices(
 export async function fetchAssetList(
     symbolsToFetch: string[]
 ): Promise<MarketAssetMap> {
-    let query = `currencies?key=${NOMICS_KEY}&attributes=id,original_symbol,name`;
-
-    console.log(`!!!!!!! Query: ${MARKET_API_URL}/${query}`)
+    const query = `coins/list`;
 
     const response = await fetch(`${MARKET_API_URL}/${query}`, {
         headers: {
-            Accept: 'application/json'
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
         },
     });
 
@@ -78,18 +63,17 @@ export async function fetchAssetList(
         return {
             id: asset.id,
             name: asset.name,
-            symbol: asset.original_symbol.toUpperCase(),
+            symbol: asset.symbol.toUpperCase(),
         } as MarketAsset;
     };
 
     // Only store assets that map to deployed.json approved assets
     // toUpperCase symbol, compare to symbols in list, store if match
     const assets = await response.json();
-
     const result: MarketAssetMap = {};
     symbolsToFetch.forEach(assetSymbol => {
         const match = assets.find(
-            value => value.original_symbol.toUpperCase() === assetSymbol
+            value => value.symbol.toUpperCase() === assetSymbol
         );
         if (match) {
             result[assetSymbol] = formatAsset(match);
