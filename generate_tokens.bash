@@ -36,15 +36,15 @@ while IFS=, read -r ticker addr
 do
     color=${COLORS[$i]}
 
-    sed -i -n "s/TICKER/${ticker}/g" "$TEMPLATE_FILE"
-    sed -i -n "s/ADDR/${addr}/g" "$TEMPLATE_FILE"
-    sed -i -n "s/COLOR/${color}/g" "$TEMPLATE_FILE"
+    sed -i "s/TICKER/${ticker}/g" "$TEMPLATE_FILE"
+    sed -i "s/ADDR/${addr}/g" "$TEMPLATE_FILE"
+    sed -i "s/COLOR/${color}/g" "$TEMPLATE_FILE"
 
     cat "$TEMPLATE_FILE" >> "$OUT_FILE"
 
-    sed -i -n "s/${ticker}/TICKER/g" "$TEMPLATE_FILE"
-    sed -i -n "s/${addr}/ADDR/g" "$TEMPLATE_FILE"
-    sed -i -n "s/${color}/COLOR/g" "$TEMPLATE_FILE"
+    sed -i "s/${ticker}/TICKER/g" "$TEMPLATE_FILE"
+    sed -i "s/${addr}/ADDR/g" "$TEMPLATE_FILE"
+    sed -i "s/${color}/COLOR/g" "$TEMPLATE_FILE"
 
     i=$(( i + 1 ))
     if (( i >= n ))
