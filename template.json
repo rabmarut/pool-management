@@ -1,0 +1,9 @@
+            {
+                "symbol": "TICKER",
+                "address": "ADDR",
+                "decimals": 18,
+                "ticker": "TICKER",
+                "iconAddress": "ADDR",
+                "precision": 2,
+                "chartColor": "COLOR"
+            },
